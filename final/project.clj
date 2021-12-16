@@ -8,3 +8,6 @@
   :target-path "target/%s"
   :profiles {:uberjar {:aot :all
                        :jvm-opts ["-Dclojure.compiler.direct-linking=true"]}})
+  :plugins [ [org.clojure/core.match "1.0.0"]  ;; Compiling Error Here 
+            
+  ]
