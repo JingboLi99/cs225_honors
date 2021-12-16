@@ -1,5 +1,5 @@
-(ns cs-225-honors-project.core
-  (:gen-class))
+;; (ns cs-225-honors-project.core
+;;   (:gen-class))
 
 ;; (defn -main
 ;;   "I don't do a whole lot ... yet."
@@ -9,7 +9,7 @@
 ;; Code from Interaction folder on CS 225 Honors Github 
 ;; Note : Some functions might not be useful to the whole project and might need to be deleted before submission
 
-(ns interaction.core
+(ns interaction.core 
   (:require [clojure.string :as str]))
 (require '[clojure.string :as str])
 (require '[clojure.core.match :refer [match]])
@@ -60,7 +60,7 @@
 (defn rand-pokemon-placement
   [maximum leaving]
   (let [place (rand-int maximum)]
-    (if (leaving place) (rand-pokemon-placement maximum leaving) (place))
+    (if (leaving place) (rand-pokemon-placement maximum leaving) place)
     )
   )
 
@@ -126,9 +126,13 @@
   Returns \"The obj is adj\" as a result."
   [state category object adj]
   (if (get-in state [category object])
-    [(update-in state [category object] (fn [x] (conj x adj)))
-     (str "The " (name object) " is " (name adj) ".")]
-    [state (str "There is no " (name object) ".")])
+    (do 
+     (update-in state [category object] (fn [x] (conj x adj)))
+     (println "Your personal pokemon is " (name adj) ".") 
+     state
+    )
+    ()
+   )
   )
 
 ;; <pre><code>
@@ -230,25 +234,25 @@
   If there is no match, return the original state and result \"I don't know what you mean.\""
   [state input-vector]
   (match input-vector
-         [:there :is :a obj] (there-is-a state obj)
-         [:name obj1 obj2 :Size size1 size2] ((the-obj-is  state :pokemons :personalPoke1 obj1) 
-                                              (the-obj-is  state :pokemons :personalPoke1 size1) 
-                                              (the-obj-is  state :pokemons :personalPoke1 (rand-pokemon-placement 3 #{}))
-                                              (the-obj-is  state :pokemons :personalPoke2 obj2) 
-                                              (the-obj-is  state :pokemons :personalPoke2 size2)
-                                              (the-obj-is  state :pokemons :personalPoke2 (rand-pokemon-placement 3 #{}))
-                                              )
-         [] (println "I don't know what you mean.")
-         )
-  )
+    [:there :is :a obj] (there-is-a state obj)
+    [:name obj1 obj2 :size size1 size2] ( do
+                                         (the-obj-is  state :pokemons :personalPoke1 obj1)
+                                         (the-obj-is  state :pokemons :personalPoke1 size1)
+                                         (update-in state [:pokemons :personalPoke1] (fn [x] (conj x (rand-pokemon-placement 3 #{}) )))
+                                         (the-obj-is  state :pokemons :personalPoke2 obj2)
+                                         (the-obj-is  state :pokemons :personalPoke2 size2)
+                                         (update-in state [:pokemons :personalPoke1] (fn [x] (conj x (rand-pokemon-placement 3 #{}) ))))
+    :else (println "I don't know what you mean.")
+    )
+  state
+)
 
 (defn shuffleverything [state] 
   (let [ pos (rand-pokemon-placement 24 #{(get-in state [:pokemons :bulbasur :loc]) 
                                           (get-in state [:pokemons :darkrai :loc]) 
                                           (get-in state [:pokemons :charmainder :loc]) 
                                           (get-in state [:pokemons :squirtle :loc])})] 
-   (update-in state [:masterPosition] pos)
-   (state)
+   (assoc state :masterPosition pos)
   )
 )
 
@@ -287,9 +291,9 @@
    )
  
   (if (== (get-in state [:wins]) 2)
-    (update-in state [:status] :won)
+    (update-in state [:masterStatus] :won)
     ( (if (== (get-in state [:wins]) -2)
-       (update-in state [:status] :lose)
+       (update-in state [:masterStatus] :lose)
        ()
        )
      )
@@ -301,55 +305,55 @@
 
 
 (defn direction 
-  [state loc] 
+  [loc] 
   (let [possiblepaths []]
-    (for [ x (loc pokespace)]
+    (for [ x (get-in pokespace [loc])]
      (if (== x (+ loc 1))
-       (conj possiblepaths "Right " )
+       ((conj possiblepaths "Right " ) 0)
        (if (== x (+ loc 5))
-         (conj possiblepaths "Down ")
+         ((conj possiblepaths "Down " ) 0)
          (if (== x (- loc 1))
-           (conj possiblepaths "Left ")
+           ((conj possiblepaths "Left " ) 0)
            (if (== x (- loc 5))
-             (conj possiblepaths "Up ")
+             ((conj possiblepaths "Up " ) 0)
              ())
          )
        )
      )
     )
-    [(possiblepaths) (state)]
   )
 )
 
 (defn numerical-direction 
   [state dir] 
   (let [ans []]
-   (if ( == (compare dir "R") 0 )
-       ( conj ans (+ (get-in state [:masterPosition]) 1) )
-       (if ( == (compare dir "D") 0 )
-         (conj ans (+ (get-in state [:masterPosition]) 5) )
-         (if ( == (compare dir "L") 0 )
-           ( conj ans (- (get-in state [:masterPosition]) 1) )
-           (if ( == (compare dir "L") 0 )
-             (conj ans (- (get-in state [:masterPosition]) 5) )
+   (if ( == (compare (str dir) "R") 0 )
+       ( (conj ans (+ (get-in state [:masterPosition]) 1)) 0)
+       (if ( == (compare (str dir) "D") 0 )
+         ( (conj ans (+ (get-in state [:masterPosition]) 5)) 0)
+         (if ( == (compare (str dir) "L") 0 )
+           ( (conj ans (- (get-in state [:masterPosition]) 1)) 0)
+           (if ( == (compare (str dir) "U") 0 )
+             ( (conj ans (- (get-in state [:masterPosition]) 5)) 0)
              ())
          )
        )
      )
-  [ (ans 0) (state)]
 )
 ) 
 
 
 (defn lookingAround [state]
-    (let [loc (state :masterPosition)]
+    (let [loc (get state :masterPosition)]
         (if (some #{(get-in state [:pokemons :charmainder :loc]) 
                     (get-in state [:pokemons :squirtle :loc]) 
                     (get-in state [:pokemons :bulbasur :loc]) 
                     (get-in state [:pokemons :darkrai :loc])} 
                   (pokespace loc))
-            (println "You hear some noise. A pokemon is nearby. ") ())
-        state ))
+            (println "You hear some noise. A pokemon is nearby. ") (println "There is no pokemon nearby."))
+        state
+      ) 
+ )
 
 
 (defn evaluateAction [state]
@@ -374,7 +378,7 @@
                      )     
                      )
       )   
-      (== curloc (:squirtle state))
+      (== curloc (get-in state [:pokemons :squirtle :loc] ))
       (do (println "You found a wild squirtle of level " 
                    (get-in state [:pokemons :squirtle :level]) 
                    ", do you want to [F]ight or [R]un for the hills? " )
@@ -394,7 +398,7 @@
                      )     
                      )
       ) 
-      (== curloc (:bulbasur state))
+      (== curloc (get-in state [:pokemons :bulbasur :loc] ))
       (do (println "You found a wild bulbasur of level " 
                    (get-in state [:pokemons :bulbasur :level]) 
                    ", do you want to [F]ight or [R]un for the hills? " )
@@ -414,7 +418,7 @@
                      )     
                      )
       )
-      (== curloc (:darkrai state))
+      (== curloc (get-in state [:pokemons :darkrai :loc] ))
       (do (println "You found a wild darkrai of level " 
                    (get-in state [:pokemons :darkrai :level]) 
                    ", do you want to [F]ight or [R]un for the hills? " )
@@ -434,7 +438,7 @@
                      )     
                      )
       )
-   
+      :else state 
   )
  )
 )
@@ -462,19 +466,19 @@
   (loop [state env]
     (if (= (:masterStatus state) :alive)
       (do
-       (println "The world in this space is filled with many pokemons. 
-                  You need to capture three pokemons to win the game. ")
+       (println "The world in this space is filled with many pokemons. "
+                "You need to capture two pokemons to win the game. ")
     
-        (println "What do you want to do? ([S]earch/[Q]uit)" )
+        (println state "          What do you want to do? ([S]earch/[Q]uit)" ) ;; remove printing state after debugging 
         (let [selection (read-line)] 
           (cond (= selection "S") 
                 (do  
                   (lookingAround state)
-                  (println " You can move in the given directions:" (direction state (-> :masterPosition state))
+                  (println " You can move in the given directions: " (direction (-> :masterPosition state))
                   " What do you want to do? (For Right - R / Left - L / Up - U / Down - D)")
                   (let [ dir (read-string (read-line))]
                           (if (some #{ (numerical-direction state dir) } (-> :masterPosition state pokespace))
-                              (recur (evaluateAction (assoc state :masterPosition dir))) 
+                              (recur (evaluateAction (assoc state :masterPosition (numerical-direction state dir) ))) 
                               (do (println "You can't go there.")
                                   (recur state)))))
                 (= selection "Q") (println "Thanks for playing Capture the Pokemons!")
