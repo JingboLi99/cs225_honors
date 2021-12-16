@@ -64,7 +64,7 @@
     )
   )
 
-(defn lookup-var
+(defn lookup-vars
   "Given a state and a variable name, return the value of the variable
   if it has been defined, otherwise return 0."
   [state var]
@@ -257,8 +257,26 @@
        )
      )
     )
-    [(possiblepaths) (state) ]
+    [(possiblepaths) (state)]
   )
+)
+
+(defn numerical-direction 
+  [state dir] 
+  (let [ans 0])
+   (if ( == (compare dir "R") 0 )
+       (ans (+ (get-in state :masterPosition) 1) )
+       (if ( == (compare dir "D") 0 )
+         (ans (+ (get-in state :masterPosition) 5) )
+         (if ( == (compare dir "L") 0 )
+           (ans (- (get-in state :masterPosition) 1) )
+           (if ( == (compare dir "L") 0 )
+             (ans (- (get-in state :masterPosition) 5) )
+             ())
+         )
+       )
+     )
+    [(ans) (state)]
 )
   
 ;; <pre><code>
@@ -294,8 +312,8 @@
                   (println " You can move in the given directions:" (direction state (-> :masterPosition state))
                   " What do you want to do? (For Right - R / Left - L / Up - U / Down - D)")
                   (let [ dir (read-string (read-line))]
-                          (if (some #{dir} (-> :masterPosition state pokespace))
-                              (recur (evaluateAction (assoc state :masterPosition dir))) ;; convert dir to the next position number 
+                          (if (some #{ (numerical-direction state dir) } (-> :masterPosition state pokespace))
+                              (recur (evaluateAction (assoc state :masterPosition dir))) 
                               (do (println "You can't go there.")
                                   (recur state)))))
                 (= selection "Q") (println "Thanks for playing Capture the Pokemons!")
@@ -405,8 +423,6 @@
  )
 )
 
-
-
 (defn shuffleverything [state] 
   (let [ pos (rand-pokemon-placement 24 #{(get-in state [:pokemons :bulbasur :loc]) 
                                           (get-in state [:pokemons :darkrai :loc]) 
@@ -415,11 +431,14 @@
    (update-in state :masterPosition pos)
    (state)
   )
+)
 
-(defn fight [state poke]
+
+(defn fight [state pokemon]
   
   
-  )
+  
+)
 ;; <pre><code>
 ;; interaction.core=> (repl initial-env)
 ;; Welcome!  Let's talk.
