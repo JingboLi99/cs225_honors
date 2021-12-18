@@ -203,8 +203,6 @@
                       :squirtle {:loc squirtle :level squirtlelevel :size "small" } 
                       :bulbasur {:loc bulbasur :level bulbasurlevel :size "medium" }
                       :darkrai {:loc darkrai :level darkrailevel :size "small" }
-                      :personalPoke1 [ ]
-                      :personalPoke2 [ ]
                       }
        :masterPosition 0 
        :masterStatus :alive
@@ -229,23 +227,47 @@
 ;; [:the :shoe :is :blue]
 ;; </code></pre>
 
+;; (defn react
+;;   "Given a state and a canonicalized input vector, search for a matching phrase and call its corresponding action.
+;;   If there is no match, return the original state and result \"I don't know what you mean.\""
+;;   [state input-vector]
+;;   (match input-vector
+;;     [:there :is :a obj] (there-is-a state obj)
+;;     [:name obj1 obj2 :size size1 size2] ( do
+;;                                          (the-obj-is  state :pokemons :personalPoke1 obj1)
+;;                                          (the-obj-is  state :pokemons :personalPoke1 size1)
+;;                                          (update-in state [:pokemons :personalPoke1] (fn [x] (conj x (rand-pokemon-placement 3 #{}) )))
+;;                                          (the-obj-is  state :pokemons :personalPoke2 obj2)
+;;                                          (the-obj-is  state :pokemons :personalPoke2 size2)
+;;                                          (update-in state [:pokemons :personalPoke2] (fn [x] (conj x (rand-pokemon-placement 3 #{}) ))))
+;;     :else (println "I don't know what you mean.")
+;;     )
+;;   state
+;; )
+
+
+
+(defn playerPokemons 
+  [obj1 obj2 size1 size2] (def myPokeState { 
+                           :personalPoke1 {:name obj1 :level (rand-pokemon-placement 3 #{}) :size size1}
+                           :personalPoke2 {:name obj2 :level (rand-pokemon-placement 3 #{}) :size size2}
+                                  } )
+  (println "Your first personal pokemon is " (name obj1) ". It's size is " (name size1))
+  (println "Your second personal pokemon is " (name obj2) ". It's size is " (name size2))
+  
+  )
+
 (defn react
   "Given a state and a canonicalized input vector, search for a matching phrase and call its corresponding action.
   If there is no match, return the original state and result \"I don't know what you mean.\""
   [state input-vector]
   (match input-vector
     [:there :is :a obj] (there-is-a state obj)
-    [:name obj1 obj2 :size size1 size2] ( do
-                                         (the-obj-is  state :pokemons :personalPoke1 obj1)
-                                         (the-obj-is  state :pokemons :personalPoke1 size1)
-                                         (update-in state [:pokemons :personalPoke1] (fn [x] (conj x (rand-pokemon-placement 3 #{}) )))
-                                         (the-obj-is  state :pokemons :personalPoke2 obj2)
-                                         (the-obj-is  state :pokemons :personalPoke2 size2)
-                                         (update-in state [:pokemons :personalPoke1] (fn [x] (conj x (rand-pokemon-placement 3 #{}) ))))
+    [:name obj1 obj2 :size size1 size2] (playerPokemons obj1 obj2 size1 size2 )
     :else (println "I don't know what you mean.")
     )
-  state
 )
+
 
 (defn shuffleverything [state] 
   (let [ pos (rand-pokemon-placement 24 #{(get-in state [:pokemons :bulbasur :loc]) 
@@ -256,52 +278,65 @@
   )
 )
 
-(defn abs [n] (max n (- n)))
-
-(defn fight [state pokemon wildpokemon ]
-  (let [win []]
-  (if (== (get-in state [:pokemons wildpokemon :level]) ((get-in state [:pokemons pokemon]) 2) )
-    (if (== (rand-int 8) (or 0 1 2 3))
-      (conj win pokemon)
-      (conj win wildpokemon)
-      )
-    (if (== (abs (compare (get-in state [:pokemons wildpokemon :level]) ((get-in state [:pokemons pokemon]) 2)))  1)
-     (if ( and (== (rand-int 8) (or 0 1 2)) (> (get-in state [:pokemons wildpokemon :level]) ((get-in state [:pokemons pokemon]) 2) ))
-      (conj win pokemon)
-      (conj win wildpokemon) 
-      )
-      (if ( and (== (rand-int 8) (or 0 1 )) (> (get-in state [:pokemons wildpokemon :level]) ((get-in state [:pokemons pokemon]) 2) ))
-        (conj win pokemon)
-        (conj win wildpokemon)
+(defn declareWinner [state]
+  (println "This is check  " state)
+   (cond (== (get-in state [:wins]) 2) 
+        (do
+           (println "Congratulations!! You have won the game" )
+           (update-in state [:masterStatus] :won)
         )
-    )
+        (== (get-in state [:wins]) -2 )
+       (do
+         (println "Sorry!! You have lost the game" )
+        (update-in state [:masterStatus] :lose)
+       )
+       :else state
+       
   )
-    
- 
-  (if (= (win 0) wildpokemon)
+)
+
+(defn updateWins [state won wildpokemon]
+  (if (= won wildpokemon)
   (do 
     (println "Oh no, the wild pokemon " (name wildpokemon) " wins the fight with your pokemon" ) 
-    (update-in state [:wins] (fn [x] (- x 1))) 
+    (declareWinner (update-in state [:wins] (fn [x] (- x 1))) ) 
     ) 
   (do
     (println "Congratulations! Your pokemon wins the fight with " (name wildpokemon)
              " . You have captured the wild pokemon.")
-    (update-in state [:wins] (fn [x] (+ x 1))) 
+    ( declareWinner (update-in state [:wins] (fn [x] (+ x 1))) )
     )
    )
- 
-  (if (== (get-in state [:wins]) 2)
-    (update-in state [:masterStatus] :won)
-    ( (if (== (get-in state [:wins]) -2)
-       (update-in state [:masterStatus] :lose)
-       ()
-       )
-     )
-   )
-   (state) 
-  
+     
   )
+
+
+(defn abs [n] (max n (- n)))
+
+(defn fight [state pokemon wildpokemon myPokeState]
+  (let [win []]
+   (println "This is myPokeState" (get-in myPokeState [:personalPoke1 :name])) 
+  (if (== (get-in state [:pokemons wildpokemon :level]) (get-in myPokeState [pokemon :level])  )
+    (if (== (rand-int 8) (or 0 1 2 3))
+     (updateWins state ((conj win pokemon) 0) wildpokemon )
+      (updateWins state ((conj win wildpokemon) 0) wildpokemon )
+      )
+    (if (== (abs (compare (get-in state [:pokemons wildpokemon :level]) (get-in myPokeState [pokemon :level]) ))  1)
+     (if ( and (== (rand-int 8) (or 0 1 2)) (> (get-in state [:pokemons wildpokemon :level]) (get-in myPokeState [pokemon :level]) ))
+      (updateWins state ((conj win pokemon) 0) wildpokemon )
+      (updateWins state ((conj win wildpokemon) 0) wildpokemon )
+      )
+      (if ( and (== (rand-int 8) (or 0 1 )) (> (get-in state [:pokemons wildpokemon :level]) (get-in myPokeState [pokemon :level]) ))
+        (updateWins state ((conj win pokemon) 0) wildpokemon )
+        (updateWins state ((conj win wildpokemon) 0) wildpokemon )
+        )
+    )
+  )
+ )
 )
+  
+ 
+
 
 
 (defn direction 
@@ -356,7 +391,7 @@
  )
 
 
-(defn evaluateAction [state]
+(defn evaluateAction [state personalpokemons]
   (let [curloc (state :masterPosition) ]
     (cond (== curloc (get-in state [:pokemons :charmainder :loc] ))
       (do (println "You found a wild charmainder of level " 
@@ -365,18 +400,18 @@
                    (let [selection (read-line)] 
                      (cond (= selection "F") 
                      (do (println "Choose your pokemon to fight: 1." 
-                                  ((get-in state [:pokemons :personalPoke1]) 0) 
-                                  " 2." ((get-in state [:pokemons :personalPoke2]) 0))
+                                  (get-in personalpokemons [:personalPoke1 :name]) 
+                                  " 2." (get-in personalpokemons [:personalPoke2 :name]))
                        (let [pokechoice (read-line)]
-                         (if (== pokechoice 1)
-                         (fight state :personalPoke1 :charmainder)
-                         (fight state :personalPoke2 :charmainder)
+                         (if (= pokechoice "1" )
+                         (fight state :personalPoke1 :charmainder personalpokemons)
+                         (fight state :personalPoke2 :charmainder personalpokemons)
                          )
                       )
                      )    
                      (= selection "R") (shuffleverything state) 
                      )     
-                     )
+                    )
       )   
       (== curloc (get-in state [:pokemons :squirtle :loc] ))
       (do (println "You found a wild squirtle of level " 
@@ -385,12 +420,12 @@
                    (let [selection (read-line)] 
                      (cond (= selection "F") 
                      (do (println "Choose your pokemon to fight: 1." 
-                                  ((get-in state [:pokemons :personalPoke1]) 0) 
-                                  " 2." ((get-in state [:pokemons :personalPoke2]) 0))
+                                 (get-in personalpokemons [:personalPoke1 :name]) 
+                                  " 2." (get-in personalpokemons [:personalPoke2 :name]))
                        (let [pokechoice (read-line)]
-                         (if (== pokechoice 1)
-                         (fight state :personalPoke1 :squirtle)
-                         (fight state :personalPoke2 :squirtle)
+                         (if (= pokechoice "1" )
+                         (fight state :personalPoke1 :squirtle personalpokemons)
+                         (fight state :personalPoke2 :squirtle personalpokemons)
                          )
                       )
                      )    
@@ -405,12 +440,12 @@
                    (let [selection (read-line)] 
                      (cond (= selection "F") 
                      (do (println "Choose your pokemon to fight: 1." 
-                                  ((get-in state [:pokemons :personalPoke1]) 0) 
-                                  " 2." ((get-in state [:pokemons :personalPoke2]) 0))
+                                  (get-in personalpokemons [:personalPoke1 :name]) 
+                                  " 2." (get-in personalpokemons [:personalPoke2 :name]))
                        (let [pokechoice (read-line)]
-                         (if (== pokechoice 1)
-                         (fight state :personalPoke1 :bulbasur)
-                         (fight state :personalPoke2 :bulbasur)
+                         (if (= pokechoice "1" )
+                         (fight state :personalPoke1 :bulbasur personalpokemons)
+                         (fight state :personalPoke2 :bulbasur personalpokemons)
                          )
                       )
                      )    
@@ -425,12 +460,12 @@
                    (let [selection (read-line)] 
                      (cond (= selection "F") 
                      (do (println "Choose your pokemon to fight: 1." 
-                                  ((get-in state [:pokemons :personalPoke1]) 0) 
-                                  " 2." ((get-in state [:pokemons :personalPoke2]) 0))
+                                  (get-in personalpokemons [:personalPoke1 :name]) 
+                                  " 2." (get-in personalpokemons [:personalPoke2 :name]))
                        (let [pokechoice (read-line)]
-                         (if (== pokechoice 1)
-                         (fight state :personalPoke1 :darkrai)
-                         (fight state :personalPoke2 :darkrai)
+                         (if (= pokechoice "1" )
+                         (fight state :personalPoke1 :darkrai personalpokemons)
+                         (fight state :personalPoke2 :darkrai personalpokemons)
                          )
                       )
                      )    
@@ -442,6 +477,8 @@
   )
  )
 )
+
+
 
 
 ;; <pre><code>
@@ -464,6 +501,7 @@
   
 
   (loop [state env]
+    (println "The current state is:" state)
     (if (= (:masterStatus state) :alive)
       (do
        (println "The world in this space is filled with many pokemons. "
@@ -478,7 +516,7 @@
                   " What do you want to do? (For Right - R / Left - L / Up - U / Down - D)")
                   (let [ dir (read-string (read-line))]
                           (if (some #{ (numerical-direction state dir) } (-> :masterPosition state pokespace))
-                              (recur (evaluateAction (assoc state :masterPosition (numerical-direction state dir) ))) 
+                              (recur (evaluateAction (assoc state :masterPosition (numerical-direction state dir) ) myPokeState )) 
                               (do (println "You can't go there.")
                                   (recur state)))))
                 (= selection "Q") (println "Thanks for playing Capture the Pokemons!")
@@ -519,4 +557,3 @@
   (repl (initial-env)
   )
 )
-
