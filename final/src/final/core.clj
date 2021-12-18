@@ -252,8 +252,12 @@
                            :personalPoke1 {:name obj1 :level (rand-pokemon-placement 3 #{}) :size size1}
                            :personalPoke2 {:name obj2 :level (rand-pokemon-placement 3 #{}) :size size2}
                                   } )
-  (println "Your first personal pokemon is " (name obj1) ". It's size is " (name size1))
-  (println "Your second personal pokemon is " (name obj2) ". It's size is " (name size2))
+  (println "Your first personal pokemon is polio " (name obj1) 
+           ". It's size is " (name size1) 
+           ". It's level is " (get-in myPokeState [ :personalPoke1 :level]) ".")
+  (println "Your second personal pokemon is " (name obj2) 
+           ". It's size is " (name size2) 
+           ". It's level is " (get-in myPokeState [ :personalPoke2 :level]) ".")
   
   )
 
@@ -264,7 +268,10 @@
   (match input-vector
     [:there :is :a obj] (there-is-a state obj)
     [:name obj1 obj2 :size size1 size2] (playerPokemons obj1 obj2 size1 size2 )
-    :else (println "I don't know what you mean.")
+    :else (do 
+            (println "I don't know what you mean.")
+             state 
+              )
     )
 )
 
@@ -492,12 +499,16 @@
   You may need (flush) to print out '>' without a newline "
   [env]
   
+   (loop [state env]
     (println "You are in the Poke Space")
     (println "Before starting the game, you can create two pokemons of your choice. Write the name and size of your pokemon as - Name Ayush, Ash , Size Big, Small")
     (let [input
           (map keyword (map str/lower-case (str/split (read-line) #"(\W+|[.?!])")))]
-          (react env (vec input))
+          (if (= (react env (vec input)) env) 
+            (recur state) 
+            ())
     )
+   )
   
 
   (loop [state env]
@@ -520,6 +531,10 @@
                               (do (println "You can't go there.")
                                   (recur state)))))
                 (= selection "Q") (println "Thanks for playing Capture the Pokemons!")
+                :else (do 
+                        (println "I don't know what you mean. ")
+                        (recur state)  
+                          )
                   )
           )
        
