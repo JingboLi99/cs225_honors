@@ -487,7 +487,16 @@
 
 
 
-
+(defn printeverything []
+  (println "The player inventory is: ")
+  (println "Your first personal pokemon is" (name (get-in myPokeState [:personalPoke1 :name])) 
+           ". It's size is" (name (get-in myPokeState [:personalPoke1 :size])) 
+           ". It's level is" (get-in myPokeState [ :personalPoke1 :level]) ".")
+  (println "Your second personal pokemon is" (name (get-in myPokeState [:personalPoke2 :name]))
+           ". It's size is" (name (get-in myPokeState [:personalPoke2 :size]))
+           ". It's level is" (get-in myPokeState [ :personalPoke2 :level]) ".")
+  )
+         
 ;; <pre><code>
 ;; interaction.core> (react {:vars {:x 10} :runtime initial-env} [:postinc :x])
 ;; [ {:vars {:x 11} :runtime { ... omitted for space ... }}  10]
@@ -512,18 +521,18 @@
   
 
   (loop [state env]
-    (println "The current state is:" state)
+    (println "The current state is:" state)     ;; remove printing state after debugging 
     (if (= (:masterStatus state) :alive)
       (do
        (println "The world in this space is filled with many pokemons. "
                 "You need to capture two pokemons to win the game. ")
     
-        (println state "          What do you want to do? ([S]earch/[Q]uit)" ) ;; remove printing state after debugging 
+        (println state " What do you want to do? ([S]earch/[Q]uit/[I]nventory)" ) 
         (let [selection (read-line)] 
           (cond (= selection "S") 
                 (do  
                   (lookingAround state)
-                  (println " You can move in the given directions: " (direction (-> :masterPosition state))
+                  (println "You can move in the given directions: " (direction (-> :masterPosition state))
                   " What do you want to do? (For Right - R / Left - L / Up - U / Down - D)")
                   (let [ dir (read-string (read-line))]
                           (if (some #{ (numerical-direction state dir) } (-> :masterPosition state pokespace))
@@ -531,6 +540,10 @@
                               (do (println "You can't go there.")
                                   (recur state)))))
                 (= selection "Q") (println "Thanks for playing Capture the Pokemons!")
+                (= selection "I") (do 
+                                    (printeverything )
+                                    (recur state)
+                                    )
                 :else (do 
                         (println "I don't know what you mean. ")
                         (recur state)  
@@ -543,7 +556,7 @@
   ) 
 )
   
-
+                            
 
 ;; <pre><code>
 ;; interaction.core=> (repl initial-env)
