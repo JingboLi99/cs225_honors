@@ -297,8 +297,18 @@
          (println "Sorry!! You have lost the game" )
         (update-in state [:masterStatus] :lose)
        )
+        (== (get-in state [:wins]) 1)
+         (do 
+           (println "You have to capture 1 more pokemon to win the game. ")
+           state
+           )
+         
+        (== (get-in state [:wins]) -1)
+         (do 
+           (println "You have to capture 3 more pokemons to win the game. ")
+           state
+           )
        :else state
-       
   )
 )
 
@@ -306,12 +316,12 @@
   (if (= won wildpokemon)
   (do 
     (println "Oh no, the wild pokemon " (name wildpokemon) " wins the fight with your pokemon" ) 
-    (declareWinner (update-in state [:wins] (fn [x] (- x 1))) ) 
+    ( declareWinner (update-in (shuffleverything state) [:wins] (fn [x] (- x 1))) ) 
     ) 
   (do
     (println "Congratulations! Your pokemon wins the fight with " (name wildpokemon)
              " . You have captured the wild pokemon.")
-    ( declareWinner (update-in state [:wins] (fn [x] (+ x 1))) )
+    ( declareWinner (update-in (shuffleverything state) [:wins] (fn [x] (+ x 1))) )
     )
    )
      
@@ -407,8 +417,8 @@
                    (let [selection (read-line)] 
                      (cond (= selection "F") 
                      (do (println "Choose your pokemon to fight: 1." 
-                                  (get-in personalpokemons [:personalPoke1 :name]) 
-                                  " 2." (get-in personalpokemons [:personalPoke2 :name]))
+                                  (name (get-in personalpokemons [:personalPoke1 :name]))
+                                  " 2." (name (get-in personalpokemons [:personalPoke2 :name])))
                        (let [pokechoice (read-line)]
                          (if (= pokechoice "1" )
                          (fight state :personalPoke1 :charmainder personalpokemons)
@@ -427,8 +437,8 @@
                    (let [selection (read-line)] 
                      (cond (= selection "F") 
                      (do (println "Choose your pokemon to fight: 1." 
-                                 (get-in personalpokemons [:personalPoke1 :name]) 
-                                  " 2." (get-in personalpokemons [:personalPoke2 :name]))
+                                 (name (get-in personalpokemons [:personalPoke1 :name]))
+                                  " 2." (name (get-in personalpokemons [:personalPoke2 :name])))
                        (let [pokechoice (read-line)]
                          (if (= pokechoice "1" )
                          (fight state :personalPoke1 :squirtle personalpokemons)
@@ -447,8 +457,8 @@
                    (let [selection (read-line)] 
                      (cond (= selection "F") 
                      (do (println "Choose your pokemon to fight: 1." 
-                                  (get-in personalpokemons [:personalPoke1 :name]) 
-                                  " 2." (get-in personalpokemons [:personalPoke2 :name]))
+                                  (name (get-in personalpokemons [:personalPoke1 :name]))
+                                  " 2." (name (get-in personalpokemons [:personalPoke2 :name])))
                        (let [pokechoice (read-line)]
                          (if (= pokechoice "1" )
                          (fight state :personalPoke1 :bulbasur personalpokemons)
@@ -467,8 +477,8 @@
                    (let [selection (read-line)] 
                      (cond (= selection "F") 
                      (do (println "Choose your pokemon to fight: 1." 
-                                  (get-in personalpokemons [:personalPoke1 :name]) 
-                                  " 2." (get-in personalpokemons [:personalPoke2 :name]))
+                                  (name (get-in personalpokemons [:personalPoke1 :name]))
+                                  " 2." (name (get-in personalpokemons [:personalPoke2 :name])))
                        (let [pokechoice (read-line)]
                          (if (= pokechoice "1" )
                          (fight state :personalPoke1 :darkrai personalpokemons)
