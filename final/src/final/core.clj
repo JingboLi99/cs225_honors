@@ -574,6 +574,7 @@
                   ;;remove blue potion
                   (update-in state [:potion :blue :exist] false)
                 )
+              (= selection "I") state
               )  
             )
           )
@@ -594,40 +595,39 @@
                       (do 
                         (println "You have been teleported!")
                         (if (= (get-in state [:pokemons :charmander :loc]) 1) ;; if pokemon position is at 1
-                            (update-in state [:masterPosition] 6)
-                            (update-in state [:masterPosition] 1)
+                            (update-in (update-in state [:masterPosition] 6) [:potion :red :exist] false)
+                            (update-in (update-in state [:masterPosition] 1) [:potion :red :exist] false)
                         )
                       )
                       (= randChoice 1);;teleport to water area
                       (do 
                         (println "You have been teleported!")
                         (if (= (get-in state [:pokemons :squirtle :loc]) 8) ;; if pokemon position is at 8
-                            (update-in state [:masterPosition] 9)
-                            (update-in state [:masterPosition] 8)
+                            (update-in (update-in state [:masterPosition] 9) [:potion :red :exist] false)
+                            (update-in (update-in state [:masterPosition] 8) [:potion :red :exist] false)
                         )
                       )
                       (= randChoice 2);;teleport to nature area
                       (do 
                         (println "You have been teleported!")
                         (if (= (get-in state [:pokemons :bulbasur :loc]) 23) ;; if pokemon position is at 23
-                            (update-in state [:masterPosition] 22)
-                            (update-in state [:masterPosition] 23)
+                            (update-in (update-in state [:masterPosition] 22) [:potion :red :exist] false)
+                            (update-in (update-in state [:masterPosition] 23) [:potion :red :exist] false)
                         )
                       )
                       (= randChoice 3);;teleport to dark area
                       (do 
                         (println "You have been teleported!")
                         (if (= (get-in state [:pokemons :darkrai :loc]) 16) ;; if pokemon position is at 16
-                            (update-in state [:masterPosition] 15)
-                            (update-in state [:masterPosition] 16)
+                            (update-in (update-in state [:masterPosition] 15) [:potion :red :exist] false)
+                            (update-in (update-in state [:masterPosition] 16) [:potion :red :exist] false)
                         )
                       )
                     )
                   )
-                  ;;remove blue potion
-                  (update-in state [:potion :red :exist] false)
                 )
-              ) 
+              (= selection "I") state
+              )
             )
           )
         )
