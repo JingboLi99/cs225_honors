@@ -587,7 +587,7 @@
             (println "If you choose to drink it, you will be teleported near a random pokemon!")
             (println "Do you wish to [D]rink or [I]gnore it?")
             (let [selection (read-line)]
-              cond (= selection "D")
+              (cond (= selection "D")
                 (do 
                   (let [randChoice (rand-int 4)] ;;0 for charmander, 1 for squirtle, 2 for balbasaur, 3 for darkrai
                     (cond (= randChoice 0);;teleport to fire area
@@ -627,6 +627,7 @@
                   ;;remove blue potion
                   (update-in state [:potion :red :exist] false)
                 )
+              ) 
             )
           )
         )
