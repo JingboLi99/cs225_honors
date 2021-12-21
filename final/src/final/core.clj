@@ -229,10 +229,10 @@
 (defn initial-env []
   (let [
         ;;hardcoded env areas 
-        fire_area(vector 0 1 2 5 6 7)
-        water_area(vector 3 4 8 9 13 14)
-        nature_area(vector 18 19 21 22 23 24)
-        dark_area(vector 10 11 15 16 17 20)
+        fire_area (vector 0 1 2 5 6 7)
+        water_area (vector 3 4 8 9 13 14)
+        nature_area (vector 18 19 21 22 23 24)
+        dark_area (vector 10 11 15 16 17 20)
 
 
         charmainder (rand-poke-placement fire_area) 
@@ -240,14 +240,16 @@
         bulbasur (rand-poke-placement nature_area)
         darkrai (rand-poke-placement dark_area)
         
-       
-        charmainderlevel (rand-stuff-placement 4 #{})
-        squirtlelevel (rand-stuff-placement 4 #{})
-        bulbasurlevel (rand-stuff-placement 4 #{})
-        darkrailevel (rand-stuff-placement 4 #{})
+        personalLevel1 (rand-stuff-placement 3 #{})
+        personalLevel2 (rand-stuff-placement 3 #{})
+        
+        charmainderlevel (rand-stuff-placement 3 #{})
+        squirtlelevel (rand-stuff-placement 3 #{})
+        bulbasurlevel (rand-stuff-placement 3 #{})
+        darkrailevel (rand-stuff-placement 3 #{})
         ;;added here
-        bluePotPos(rand-stuff-placement 25 #{charmainder, squirtle, bulbasur, 0}) ;;potion placement will generate a vector of 2 positions 
-        redPotPos(rand-stuff-placement 25 #{bluePotPos, charmainder, squirtle, bulbasur, 0}) ;;potion placement will generate a vector of 2 positions 
+        bluePotPos (rand-stuff-placement 25 #{charmainder, squirtle, bulbasur, 12}) ;;potion placement will generate a vector of 2 positions 
+        redPotPos (rand-stuff-placement 25 #{bluePotPos, charmainder, squirtle, bulbasur, 12}) ;;potion placement will generate a vector of 2 positions 
         
        ]
      { :pokemons {:charmainder  {:loc charmainder :level charmainderlevel :size "big"} 
@@ -257,11 +259,16 @@
                       }
        :masterPosition 12 ;;added here changed masterPosition to 12 
        :masterStatus :alive
-       :wins 0
+       :wins 0 
        ;;added here
-       :potion {:blue{:loc bluePotPos :exist true}
-                :red{:loc redPotPos :exist true}
+       :potion {:blue {:loc bluePotPos :exist true}
+                :red {:loc redPotPos :exist true}
                 }
+       :personalPokemonsLevels {
+                                 :personalPoke1 {:level personalLevel1}
+                                 :personalPoke2 {:level personalLevel2}
+                                 
+       }
       :fire_area fire_area
       :water_area water_area
       :nature_area nature_area
@@ -307,16 +314,19 @@
 
 
 (defn playerPokemons 
-  [obj1 obj2 size1 size2] (def myPokeState { 
-                           :personalPoke1 {:name obj1 :level (rand-stuff-placement 4 #{}) :size size1}
-                           :personalPoke2 {:name obj2 :level (rand-stuff-placement 4 #{}) :size size2}
+  [state obj1 obj2 size1 size2] ( def myPokeState { 
+                           :personalPoke1 {:name obj1 :size size1}
+                           :personalPoke2 {:name obj2 :size size2}
                                   } )
+  (println "passed state is::" state)
+   (println "out1:" (get-in state [:personalPokemonsLevels :personalPoke1 :level]))
+   (println "out2:" (get-in state [:personalPokemonsLevels :personalPoke2 :level]))
   (println "Your first personal pokemon is polio " (name obj1) 
            ". It's size is " (name size1) 
-           ". It's level is " (get-in myPokeState [ :personalPoke1 :level]) ".")
+           ". It's level is " (get-in state [:personalPokemonsLevels :personalPoke1 :level])".")
   (println "Your second personal pokemon is " (name obj2) 
            ". It's size is " (name size2) 
-           ". It's level is " (get-in myPokeState [ :personalPoke2 :level]) ".")
+           ". It's level is "  (get-in state [:personalPokemonsLevels :personalPoke2 :level]) ".")
   
   )
 
@@ -325,8 +335,9 @@
   If there is no match, return the original state and result \"I don't know what you mean.\""
   [state input-vector]
   (match input-vector
-    [:there :is :a obj] (there-is-a state obj)
-    [:name obj1 obj2 :size size1 size2] (playerPokemons obj1 obj2 size1 size2 )
+    [:name obj1 obj2 :size size1 size2] (do (println "state is::" state) 
+                                            (playerPokemons state obj1 obj2 size1 size2 )
+                                            )
     :else (do 
             (println "I don't know what you mean.")
              state 
@@ -389,20 +400,20 @@
 
 (defn abs [n] (max n (- n)))
 
-(defn fight [state pokemon wildpokemon myPokeState]
+(defn fight [state pokemon wildpokemon]
   (let [win []]
-   (println "This is myPokeState" (get-in myPokeState [:personalPoke1 :name])) 
-  (if (== (get-in state [:pokemons wildpokemon :level]) (get-in myPokeState [pokemon :level])  )
+  ;;  (println "This is myPokeState" (get-in myPokeState [:personalPoke1 :name])) 
+  (if (== (get-in state [:pokemons wildpokemon :level]) (get-in state [:personalPokemonsLevels pokemon :level])  )
     (if (== (rand-int 8) (or 0 1 2 3))
      (updateWins state ((conj win pokemon) 0) wildpokemon )
       (updateWins state ((conj win wildpokemon) 0) wildpokemon )
       )
-    (if (== (abs (compare (get-in state [:pokemons wildpokemon :level]) (get-in myPokeState [pokemon :level]) ))  1)
-     (if ( and (== (rand-int 8) (or 0 1 2)) (> (get-in state [:pokemons wildpokemon :level]) (get-in myPokeState [pokemon :level]) ))
+    (if (== (abs (compare (get-in state [:pokemons wildpokemon :level]) (get-in state [:personalPokemonsLevels pokemon :level])  ))  1)
+     (if ( and (== (rand-int 8) (or 0 1 2)) (> (get-in state [:pokemons wildpokemon :level]) (get-in state [:personalPokemonsLevels pokemon :level])  ))
       (updateWins state ((conj win pokemon) 0) wildpokemon )
       (updateWins state ((conj win wildpokemon) 0) wildpokemon )
       )
-      (if ( and (== (rand-int 8) (or 0 1 )) (> (get-in state [:pokemons wildpokemon :level]) (get-in myPokeState [pokemon :level]) ))
+      (if ( and (== (rand-int 8) (or 0 1 )) (> (get-in state [:pokemons wildpokemon :level]) (get-in state [:personalPokemonsLevels pokemon :level])  ))
         (updateWins state ((conj win pokemon) 0) wildpokemon )
         (updateWins state ((conj win wildpokemon) 0) wildpokemon )
         )
@@ -480,8 +491,8 @@
                                   " 2." (name (get-in personalpokemons [:personalPoke2 :name])))
                        (let [pokechoice (read-line)]
                          (if (= pokechoice "1" )
-                         (fight state :personalPoke1 :charmainder personalpokemons)
-                         (fight state :personalPoke2 :charmainder personalpokemons)
+                         (fight state :personalPoke1 :charmainder )
+                         (fight state :personalPoke2 :charmainder )
                          )
                       )
                      )    
@@ -489,7 +500,7 @@
                      )     
                     )
       )   
-      (== curloc (get-in state [:pokemons :squirtle :loc] ))
+      (== curloc (get-in state [:pokemons :squirtle :loc]))
       (do (println "You found a wild squirtle of level " 
                    (get-in state [:pokemons :squirtle :level]) 
                    ", do you want to [F]ight or [R]un for the hills? " )
@@ -500,8 +511,8 @@
                                   " 2." (name (get-in personalpokemons [:personalPoke2 :name])))
                        (let [pokechoice (read-line)]
                          (if (= pokechoice "1" )
-                         (fight state :personalPoke1 :squirtle personalpokemons)
-                         (fight state :personalPoke2 :squirtle personalpokemons)
+                         (fight state :personalPoke1 :squirtle )
+                         (fight state :personalPoke2 :squirtle )
                          )
                       )
                      )    
@@ -520,8 +531,8 @@
                                   " 2." (name (get-in personalpokemons [:personalPoke2 :name])))
                        (let [pokechoice (read-line)]
                          (if (= pokechoice "1" )
-                         (fight state :personalPoke1 :bulbasur personalpokemons)
-                         (fight state :personalPoke2 :bulbasur personalpokemons)
+                         (fight state :personalPoke1 :bulbasur )
+                         (fight state :personalPoke2 :bulbasur )
                          )
                       )
                      )    
@@ -540,8 +551,8 @@
                                   " 2." (name (get-in personalpokemons [:personalPoke2 :name])))
                        (let [pokechoice (read-line)]
                          (if (= pokechoice "1" )
-                         (fight state :personalPoke1 :darkrai personalpokemons)
-                         (fight state :personalPoke2 :darkrai personalpokemons)
+                         (fight state :personalPoke1 :darkrai )
+                         (fight state :personalPoke2 :darkrai )
                          )
                       )
                      )    
@@ -552,8 +563,7 @@
 
       ;;added here
       (== curloc (get-in state [:potion :blue :loc]))
-      (do 
-        (if (state [:potion :blue :exist]) 
+      (if (= (get-in state [:potion :blue :exist]) true) 
           (do
             (println "You found the super rare potion of luck!")
             (println "If you choose to drink it, there is a 50% chance that your pokemons will level up by one! But there is an equal chance that they will level down by one...")
@@ -561,75 +571,75 @@
             (let [selection (read-line)]
               (cond (= selection "D")
                 (do 
-                  (let [randChoice (rand-int 2)] ;;0 for minus, 1 for plus
+                       (let [randChoice (rand-int 2)] ;;0 for minus, 1 for plus
                     (if (= randChoice 1)
-                      (do (println "Congratulations! All your pokemon leveled up!")
-                          (update-in (update-in myPokeState [:personalPoke1 :level] inc) [:personalPoke2 :level] inc) ;; if increase level
+                      (do (println "Congratulations! All your pokemons leveled up!")
+                          ;; (update-in (update-in myPokeState [:personalPoke1 :level] inc) [:personalPoke2 :level] inc) ;; if increase level
+                          (update-in (update-in (update-in state [:personalPokemonsLevels :personalPoke1 :level] (fn [x] (if (= x 2) x (inc x)))) [ :personalPokemonsLevels :personalPoke2 :level] (fn [x] (if (= x 2) x (inc x)))) [:potion :blue :exist] (fn [x] (not x) ))
                       )
-                      (do (println "Bad Luck! All your pokemon leveled down...")
-                          (update-in (update-in myPokeState [:personalPoke1 :level] dec) [:personalPoke2 :level] dec) ;;if decrease level
+                      (do (println "Bad Luck! All your pokemons leveled down...")
+                          ;; (update-in (update-in myPokeState [:personalPoke1 :level] dec) [:personalPoke2 :level] dec) ;;if decrease level
+                          (update-in (update-in (update-in state [:personalPokemonsLevels :personalPoke1 :level] (fn [x] (if (= x 0) x (dec x)))) [ :personalPokemonsLevels :personalPoke2 :level] (fn [x] (if (= x 0) x (dec x)))) [:potion :blue :exist] (fn [x] (not x) ))
                       )
                     )
                   )
                   ;;remove blue potion
-                  (update-in state [:potion :blue :exist] false)
+                  ;; (update-in state [:potion :blue :exist] (fn [x] (not x) )) 
                 )
+              (= selection "I") state
               )  
             )
           )
         )
-      )
       (== curloc (get-in state [:potion :red :loc]))
-      (do
-        (if (state [:potion :red :exist])
+        (if (= (get-in state [:potion :red :exist]) true)
           (do
             (println "You found the super rare potion of teleportation!")
             (println "If you choose to drink it, you will be teleported near a random pokemon!")
             (println "Do you wish to [D]rink or [I]gnore it?")
             (let [selection (read-line)]
-              cond (= selection "D")
+              (cond (= selection "D")
                 (do 
                   (let [randChoice (rand-int 4)] ;;0 for charmander, 1 for squirtle, 2 for balbasaur, 3 for darkrai
                     (cond (= randChoice 0);;teleport to fire area
                       (do 
                         (println "You have been teleported!")
                         (if (= (get-in state [:pokemons :charmander :loc]) 1) ;; if pokemon position is at 1
-                            (update-in state [:masterPosition] 6)
-                            (update-in state [:masterPosition] 1)
+                            (update-in (assoc state :masterPosition 6) [:potion :red :exist] (fn [x] (not x) ) )
+                            (update-in (assoc state :masterPosition 1) [:potion :red :exist]  (fn [x] (not x) ) )
                         )
                       )
                       (= randChoice 1);;teleport to water area
                       (do 
                         (println "You have been teleported!")
                         (if (= (get-in state [:pokemons :squirtle :loc]) 8) ;; if pokemon position is at 8
-                            (update-in state [:masterPosition] 9)
-                            (update-in state [:masterPosition] 8)
+                            (update-in (assoc state :masterPosition 9) [:potion :red :exist] (fn [x] (not x) ) )
+                            (update-in (assoc state :masterPosition 8) [:potion :red :exist] (fn [x] (not x) ) )
                         )
                       )
                       (= randChoice 2);;teleport to nature area
                       (do 
                         (println "You have been teleported!")
                         (if (= (get-in state [:pokemons :bulbasur :loc]) 23) ;; if pokemon position is at 23
-                            (update-in state [:masterPosition] 22)
-                            (update-in state [:masterPosition] 23)
+                            (update-in (assoc state :masterPosition 22) [:potion :red :exist] (fn [x] (not x) ))
+                            (update-in (assoc state :masterPosition 23) [:potion :red :exist] (fn [x] (not x) ))
                         )
                       )
                       (= randChoice 3);;teleport to dark area
                       (do 
                         (println "You have been teleported!")
                         (if (= (get-in state [:pokemons :darkrai :loc]) 16) ;; if pokemon position is at 16
-                            (update-in state [:masterPosition] 15)
-                            (update-in state [:masterPosition] 16)
+                            (update-in (assoc state :masterPosition 15) [:potion :red :exist] (fn [x] (not x) ))
+                            (update-in (assoc state :masterPosition 16) [:potion :red :exist] (fn [x] (not x) ))
                         )
                       )
                     )
                   )
-                  ;;remove blue potion
-                  (update-in state [:potion :red :exist] false)
                 )
+              (= selection "I") state
+              )
             )
           )
-        )
       )
       :else state 
   )
@@ -638,14 +648,14 @@
 
 
 
-(defn printeverything []
+(defn printeverything [state]
   (println "The player inventory is: ")
   (println "Your first personal pokemon is" (name (get-in myPokeState [:personalPoke1 :name])) 
            ". It's size is" (name (get-in myPokeState [:personalPoke1 :size])) 
-           ". It's level is" (get-in myPokeState [ :personalPoke1 :level]) ".")
+           ". It's level is" (get-in state [:personalPokemonsLevels :personalPoke1 :level])  ".")
   (println "Your second personal pokemon is" (name (get-in myPokeState [:personalPoke2 :name]))
            ". It's size is" (name (get-in myPokeState [:personalPoke2 :size]))
-           ". It's level is" (get-in myPokeState [ :personalPoke2 :level]) ".")
+           ". It's level is" (get-in state [:personalPokemonsLevels :personalPoke2 :level]) ".")
   )
          
 ;; <pre><code>
@@ -664,7 +674,8 @@
     (println "Before starting the game, you can create two pokemons of your choice. Write the name and size of your pokemon as - Name Ayush, Ash , Size Big, Small")
     (let [input
           (map keyword (map str/lower-case (str/split (read-line) #"(\W+|[.?!])")))]
-          (if (= (react env (vec input)) env) 
+          (println "This is the original state:" state)
+          (if (= (react state (vec input)) state) 
             (recur state) 
             ())
     )
@@ -692,11 +703,11 @@
                                   (recur state)))))
                 (= selection "Q") (println "Thanks for playing Capture the Pokemons!")
                 (= selection "I") (do 
-                                    (printeverything )
+                                    (printeverything state)
                                     (recur state)
                                     )
                 ;;added here                    
-                (= selection "M") (
+                (= selection "M") (do 
                   (let [currPos (get-in state [:masterPosition])]
                  
                     (cond (some #(= currPos %) (get-in state [:fire_area ]))
@@ -707,8 +718,10 @@
                             (println "You are currently in the nature area, You may run into a Bulbasaur...")
                           (some #(= currPos %) (get-in state [:dark_area]))
                             (println "You are currently in the water area, You may run into a Darkrai...")
+                          :else (println "You are currently in the starting position")
                     )
                   )
+                  (recur state)
                 )
                 :else (do 
                         (println "I don't know what you mean. ")
