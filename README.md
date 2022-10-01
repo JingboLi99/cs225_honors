@@ -1,2 +1,2 @@
 # cs225_honors
-cs 225 honors project
+Simple command line text-based adventure game built with clojure
